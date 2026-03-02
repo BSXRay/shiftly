@@ -1,0 +1,5 @@
+permissions:
+  admin_move:
+    node: shiftly.admin.move
+    description: Move players between servers
+    default_op: true
