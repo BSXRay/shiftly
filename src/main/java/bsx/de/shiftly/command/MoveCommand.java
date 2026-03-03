@@ -62,7 +62,7 @@ public class MoveCommand implements SimpleCommand {
 
             if (args.length != 3) {
                 invocation.source().sendMessage(
-                        Component.text("Usage: /move -group <group> <server>"));
+                        messageConfig.get("messages.usage_move_group"));
                 return;
             }
 
@@ -88,13 +88,13 @@ public class MoveCommand implements SimpleCommand {
             final RegisteredServer server = serverOpt.get();
 
             String scope = messageConfig.getMessageScope();
-            Component baseMessageTemplate = messageConfig.get("messages.moved_success");
+            Component baseMessageTemplate = messageConfig.get("messages.moved_group_success");
 
             groupTargets.forEach(player -> {
                 moveService.movePlayer(player, server);
 
                 Component message = baseMessageTemplate
-                        .replaceText(builder -> builder.matchLiteral("<player>").replacement(player.getUsername()))
+                        .replaceText(builder -> builder.matchLiteral("<group>").replacement(groupName))
                         .replaceText(builder -> builder.matchLiteral("<server>").replacement(server.getServerInfo().getName()));
 
                 switch (scope) {
