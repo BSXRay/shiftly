@@ -1,11 +1,7 @@
 bsx\de\shiftly\command\ReloadCommand.class
 bsx\de\shiftly\config\ConfigLoader.class
 bsx\de\shiftly\config\MessageConfig.class
-bsx\de\shiftly\permission\PermissionCache.class
-bsx\de\shiftly\permission\PermissionRegistry.class
-bsx\de\shiftly\permission\PermissionManager.class
 bsx\de\shiftly\service\MoveService.class
 bsx\de\shiftly\util\LuckPermsBridge.class
-bsx\de\shiftly\util\TransferSafetyChecker.class
 bsx\de\shiftly\command\MoveCommand.class
 bsx\de\shiftly\Shiftly.class

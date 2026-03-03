@@ -1,5 +1,20 @@
+# Shiftly Permission Configuration
+# Set default: true to allow everyone to use the command without explicit permission
+
 permissions:
-  admin_move:
-    node: shiftly.admin.move
-    description: Move players between servers
-    default_op: true
+  admin:
+    node: shiftly.admin
+    description: "Access to all Shiftly admin commands"
+    default: false
+  move:
+    node: shiftly.command.move
+    description: "Move players between servers"
+    default: false
+  move_group:
+    node: shiftly.command.move.group
+    description: "Move all players in a LuckPerms group"
+    default: false
+  reload:
+    node: shiftly.command.reload
+    description: "Reload Shiftly configuration"
+    default: false

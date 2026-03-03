@@ -3,11 +3,15 @@ package bsx.de.shiftly.permission;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manages permission defaults from permissions.yml
+ */
 public class PermissionManager {
 
-    private Map<String, Object> configData;
+    private final Map<String, Boolean> defaults = new HashMap<>();
 
     public void load() {
         Yaml yaml = new Yaml();
@@ -15,8 +19,27 @@ public class PermissionManager {
         try (InputStream input = getClass().getClassLoader()
                 .getResourceAsStream("config/permissions.yml")) {
 
-            if (input != null) {
-                configData = yaml.load(input);
+            if (input == null) return;
+
+            Map<String, Object> data = yaml.load(input);
+
+            if (data == null || !data.containsKey("permissions")) return;
+
+            Object permissionsObj = data.get("permissions");
+            if (!(permissionsObj instanceof Map)) return;
+
+            Map<?, ?> permissions = (Map<?, ?>) permissionsObj;
+
+            for (Map.Entry<?, ?> entry : permissions.entrySet()) {
+                String key = entry.getKey().toString();
+                Object value = entry.getValue();
+
+                if (value instanceof Map) {
+                    Map<?, ?> permData = (Map<?, ?>) value;
+                    Object defaultObj = permData.get("default");
+                    boolean defaultValue = defaultObj instanceof Boolean && (Boolean) defaultObj;
+                    defaults.put(key, defaultValue);
+                }
             }
 
         } catch (Exception e) {
@@ -24,22 +47,12 @@ public class PermissionManager {
         }
     }
 
-    public boolean isOpDefault(String permissionKey) {
-
-        if (configData == null) return false;
-
-        Object permissionsObj = configData.get("permissions");
-        if (!(permissionsObj instanceof Map)) return false;
-
-        Map<?, ?> permissions = (Map<?, ?>) permissionsObj;
-
-        Object permEntryObj = permissions.get(permissionKey);
-        if (!(permEntryObj instanceof Map)) return false;
-
-        Map<?, ?> permEntry = (Map<?, ?>) permEntryObj;
-
-        Object opDefault = permEntry.get("default_op");
-
-        return opDefault instanceof Boolean && (Boolean) opDefault;
+    /**
+     * Check if permission is enabled by default
+     * @param permissionKey permission key
+     * @return true if default enabled
+     */
+    public boolean isDefaultEnabled(String permissionKey) {
+        return defaults.getOrDefault(permissionKey, false);
     }
 }

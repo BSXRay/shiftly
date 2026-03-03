@@ -6,7 +6,7 @@
 
     <groupId>bsx.de</groupId>
     <artifactId>Shiftly</artifactId>
-    <version>1.21.11</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -34,6 +34,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- bStats -->
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-velocity</artifactId>
+            <version>3.2.1</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
     <!-- ================= BUILD ================= -->
@@ -51,8 +59,41 @@
                 <version>3.13.0</version>
 
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
+                    <proc>none</proc>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Shade -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+                <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>bsx.de.shiftly.libs.bstats</shadedPattern>
+                        </relocation>
+                    </relocations>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/MANIFEST.MF</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
             </plugin>
 
