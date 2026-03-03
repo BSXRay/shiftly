@@ -9,11 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Bridge to LuckPerms API - optional dependency
+ */
 public class LuckPermsBridge {
 
     private LuckPerms luckPerms;
     private ProxyServer proxyServer;
 
+    /**
+     * Initialize LuckPerms bridge
+     * @param proxyServer velocity proxy server
+     */
     public void init(ProxyServer proxyServer) {
         this.proxyServer = proxyServer;
         try {
@@ -23,8 +30,13 @@ public class LuckPermsBridge {
         }
     }
 
+    /**
+     * Check if player has a specific permission
+     * @param playerName player name
+     * @param permission permission node
+     * @return true if has permission
+     */
     public boolean hasPermission(String playerName, String permission) {
-
         if (luckPerms == null) {
             return false;
         }
@@ -40,8 +52,12 @@ public class LuckPermsBridge {
                 .asBoolean();
     }
 
+    /**
+     * Get all players in a specific LuckPerms group
+     * @param groupName group name
+     * @return list of players
+     */
     public List<Player> getPlayersInGroup(String groupName) {
-
         if (luckPerms == null || proxyServer == null) {
             return List.of();
         }
@@ -64,12 +80,19 @@ public class LuckPermsBridge {
         return result;
     }
 
+    /**
+     * Check if LuckPerms is available
+     * @return true if available
+     */
     public boolean isAvailable() {
         return luckPerms != null;
     }
 
+    /**
+     * Get all loaded group names from LuckPerms
+     * @return list of group names
+     */
     public List<String> getGroupNames() {
-
         if (luckPerms == null) {
             return List.of();
         }

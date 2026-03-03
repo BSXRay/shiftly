@@ -1,23 +1,19 @@
+# Shiftly Message Configuration
+
 messages:
-  no_permission: "<red>You have no permission.</red>"
+  no_permission: "<red>You don't have permission.</red>"
   usage_move: "<yellow>Usage: /move <player|@a> <server></yellow>"
   usage_move_group: "<yellow>Usage: /move -group <group> <server></yellow>"
   player_not_found: "<red>Player not found.</red>"
   server_not_found: "<red>Server not found.</red>"
-  moved_success: "<green><player> moved -> <server></green>"
-  moved_group_success: "<green><group> moved -> <server></green>"
+  moved_success: "<green>Player: <player> moved -> <server></green>"
+  moved_group_success: "<green>Group: <group> moved -> <server></green>"
 
 settings:
   # Message broadcast mode
 
-  # GLOBAL
-  # → Everyone on the proxy will see the message.
-
-  # TARGET_ONLY
-  # → Only the moved player will see the message.
-
-  # TARGET_AND_ADMINS
-  # → The moved player + players with admin permission
-  #   (shiftly.admin.move) will see the message.
+  # GLOBAL - Everyone on the proxy will see the message
+  # TARGET_ONLY - Only the moved player will see the message
+  # TARGET_AND_ADMINS - The moved player + players with admin permission will see the message
 
   message_scope: "GLOBAL"

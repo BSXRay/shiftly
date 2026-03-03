@@ -10,6 +10,9 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Message configuration manager with caching for performance
+ */
 public final class MessageConfig {
 
     private final Map<String, Object> messages = new ConcurrentHashMap<>();
@@ -18,24 +21,22 @@ public final class MessageConfig {
 
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
+    /**
+     * Load messages from config file
+     */
     @SuppressWarnings("unchecked")
     public void load() {
-
         try {
-
             Path file = Path.of("plugins/Shiftly/config/messages.yml");
 
-            if (!Files.exists(file))
-                return;
+            if (!Files.exists(file)) return;
 
             Yaml yaml = new Yaml();
 
             try (FileInputStream in = new FileInputStream(file.toFile())) {
-
                 Map<String, Object> data = yaml.load(in);
 
-                if (data == null)
-                    return;
+                if (data == null) return;
 
                 cache.clear();
                 messages.clear();
@@ -55,26 +56,30 @@ public final class MessageConfig {
         }
     }
 
+    /**
+     * Reload configuration
+     */
     public void reload() {
         load();
     }
 
     /**
-     * Get formatted message
+     * Get formatted message with MiniMessage
+     * @param key message key
+     * @return formatted component
      */
     public Component get(String key) {
-
-        if (messages.isEmpty())
+        if (messages.isEmpty()) {
             return Component.text(key);
+        }
 
         return cache.computeIfAbsent(key, k -> {
-
             String path = k.replace("messages.", "");
-
             Object value = messages.get(path);
 
-            if (value == null)
+            if (value == null) {
                 return Component.text(k);
+            }
 
             return miniMessage.deserialize(value.toString());
         });
@@ -82,14 +87,11 @@ public final class MessageConfig {
 
     /**
      * Get message scope setting
+     * @return scope (GLOBAL, TARGET_ONLY, TARGET_AND_ADMINS)
      */
     public String getMessageScope() {
-
         Object scope = settings.get("message_scope");
-
-        if (scope == null)
-            return "GLOBAL";
-
+        if (scope == null) return "GLOBAL";
         return scope.toString();
     }
 }
