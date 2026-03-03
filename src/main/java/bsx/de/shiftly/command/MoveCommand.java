@@ -195,6 +195,19 @@ public class MoveCommand implements SimpleCommand {
 
         String[] args = invocation.arguments();
 
+        if (args.length == 0) {
+            List<String> result = new ArrayList<>();
+            result.add("@a");
+            if (luckPermsBridge.isAvailable()) {
+                result.add("-group");
+            }
+            result.addAll(proxyServer.getAllPlayers().stream()
+                    .map(Player::getUsername)
+                    .sorted()
+                    .collect(Collectors.toList()));
+            return result;
+        }
+
         if (args.length == 1) {
 
             String input = args[0].toLowerCase();
