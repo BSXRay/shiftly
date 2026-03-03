@@ -66,7 +66,7 @@ public class Shiftly {
         messageConfig.load();
 
         bridge = new LuckPermsBridge();
-        bridge.init();
+        bridge.init(proxyServer);
 
         moveService = new MoveService(proxyServer);
     }

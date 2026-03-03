@@ -3,3 +3,11 @@ permissions:
     node: shiftly.admin.move
     description: Move players between servers
     default_op: true
+  admin_move_group:
+    node: shiftly.admin.move.group
+    description: Move all players in a LuckPerms group
+    default_op: true
+  admin_reload:
+    node: shiftly.admin.reload
+    description: Reload Shiftly configuration
+    default_op: true
