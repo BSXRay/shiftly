@@ -10,7 +10,7 @@ import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
 import bsx.de.shiftly.command.MoveCommand;
-import bsx.de.shiftly.command.ReloadCommand;
+import bsx.de.shiftly.command.ShiftlyCommand;
 import bsx.de.shiftly.config.CommandConfig;
 import bsx.de.shiftly.config.ConfigLoader;
 import bsx.de.shiftly.config.MessageConfig;
@@ -21,14 +21,11 @@ import bsx.de.shiftly.util.PermissionHelper;
 
 import java.nio.file.Path;
 
-/**
- * Shiftly - Velocity plugin for player management
- */
 @Plugin(
         id = "shiftly",
         name = "Shiftly",
         version = "1.0.0",
-        authors = {"bsxray"}
+        authors = {"BSXRay"}
 )
 public class Shiftly {
 
@@ -48,7 +45,6 @@ public class Shiftly {
                    @DataDirectory Path dataDirectory,
                    Logger logger,
                    Metrics.Factory metricsFactory) {
-
         this.proxyServer = proxyServer;
         this.dataDirectory = dataDirectory;
         this.logger = logger;
@@ -57,39 +53,17 @@ public class Shiftly {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        // Initialize bStats
-        int pluginId = 29883;
-        Metrics metrics = metricsFactory.make(this, pluginId);
-        
-        // Startup message with ANSI colors
-        String ANSI_PINK = "\u001b[35m";
-        String ANSI_BLUE = "\u001b[34m";
-        String ANSI_GREEN = "\u001b[32m";
-        String ANSI_RESET = "\u001b[0m";
-        logger.info(ANSI_PINK + "Shiftly" + ANSI_RESET + " by " + ANSI_BLUE + "BSXRay" + ANSI_RESET + " " + ANSI_GREEN + "enabled!" + ANSI_RESET);
-        
-        bootstrapConfigs();
-        initializeSystems();
-        registerCommands();
-    }
+        metricsFactory.make(this, 29883);
+        logger.info("\u001b[35mShiftly\u001b[0m by \u001b[34mBSXRay\u001b[0m \u001b[32menabled!\u001b[0m");
 
-    /**
-     * Copy default config files if they don't exist
-     */
-    private void bootstrapConfigs() {
-        ConfigLoader.saveResourceIfNotExists(dataDirectory, "config/messages.yml");
-        ConfigLoader.saveResourceIfNotExists(dataDirectory, "config/permissions.yml");
-        ConfigLoader.saveResourceIfNotExists(dataDirectory, "config/commands.yml");
-    }
+        ConfigLoader.saveResourceIfNotExists(dataDirectory, "messages.yml");
+        ConfigLoader.saveResourceIfNotExists(dataDirectory, "permissions.yml");
+        ConfigLoader.saveResourceIfNotExists(dataDirectory, "commands.yml");
 
-    /**
-     * Initialize all services
-     */
-    private void initializeSystems() {
-        messageConfig = new MessageConfig();
+        messageConfig = new MessageConfig(dataDirectory);
         messageConfig.load();
 
-        commandConfig = new CommandConfig();
+        commandConfig = new CommandConfig(dataDirectory);
         commandConfig.load();
 
         luckPermsBridge = new LuckPermsBridge();
@@ -99,34 +73,22 @@ public class Shiftly {
         permissionManager.load();
 
         permissionHelper = new PermissionHelper(permissionManager, luckPermsBridge);
-
         moveService = new MoveService(proxyServer);
-    }
 
-    /**
-     * Register all commands
-     */
-    private void registerCommands() {
         var commandManager = proxyServer.getCommandManager();
 
-        // Register move command
+        commandManager.register(
+                commandManager.metaBuilder("shiftly").build(),
+                new ShiftlyCommand(messageConfig, permissionHelper)
+        );
+
         String moveAlias = commandConfig.getAlias("move");
         commandManager.register(
                 commandManager.metaBuilder(moveAlias).build(),
                 new MoveCommand(proxyServer, moveService, luckPermsBridge, messageConfig, permissionHelper)
         );
-
-        // Register reload command
-        String reloadAlias = commandConfig.getAlias("reload");
-        commandManager.register(
-                commandManager.metaBuilder(reloadAlias).build(),
-                new ReloadCommand(messageConfig, permissionHelper, this)
-        );
     }
 
-    /**
-     * Reload configuration (messages only) - aliases require restart
-     */
     public void reloadConfig() {
         messageConfig.reload();
     }

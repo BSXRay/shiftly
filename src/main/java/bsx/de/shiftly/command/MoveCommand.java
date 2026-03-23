@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * /move command - move players between servers
- */
 public class MoveCommand implements SimpleCommand {
 
     private final ProxyServer proxyServer;
@@ -32,7 +29,6 @@ public class MoveCommand implements SimpleCommand {
                        LuckPermsBridge bridge,
                        MessageConfig messageConfig,
                        PermissionHelper permissionHelper) {
-
         this.proxyServer = proxyServer;
         this.moveService = moveService;
         this.luckPermsBridge = bridge;
@@ -51,13 +47,11 @@ public class MoveCommand implements SimpleCommand {
 
         String targetName = args[0];
 
-        // Handle -group option
         if (targetName.equalsIgnoreCase("-group")) {
             handleGroupMove(invocation, args);
             return;
         }
 
-        // Regular move: /move <player> <server>
         if (args.length != 2) {
             invocation.source().sendMessage(messageConfig.get("messages.usage_move"));
             return;
@@ -67,14 +61,12 @@ public class MoveCommand implements SimpleCommand {
     }
 
     private void handleGroupMove(Invocation invocation, String[] args) {
-        // Check permission
-        if (!permissionHelper.checkAdmin(invocation.source()) && 
+        if (!permissionHelper.checkAdmin(invocation.source()) &&
             !permissionHelper.checkMoveGroup(invocation.source())) {
             invocation.source().sendMessage(messageConfig.get("messages.no_permission"));
             return;
         }
 
-        // Check LuckPerms availability
         if (!luckPermsBridge.isAvailable()) {
             invocation.source().sendMessage(Component.text("LuckPerms is not available."));
             return;
@@ -88,7 +80,6 @@ public class MoveCommand implements SimpleCommand {
         String groupName = args[1];
         String serverName = args[2];
 
-        // Get players in group
         List<Player> groupTargets = luckPermsBridge.getPlayersInGroup(groupName);
 
         if (groupTargets.isEmpty()) {
@@ -97,7 +88,6 @@ public class MoveCommand implements SimpleCommand {
             return;
         }
 
-        // Find server
         var serverOpt = moveService.findServer(serverName);
         if (serverOpt.isEmpty()) {
             invocation.source().sendMessage(messageConfig.get("messages.server_not_found"));
@@ -105,20 +95,43 @@ public class MoveCommand implements SimpleCommand {
         }
 
         RegisteredServer server = serverOpt.get();
+        String targetServer = server.getServerInfo().getName();
 
-        // Send single message based on scope
+        groupTargets.forEach(p -> moveService.movePlayer(p, server));
+
         String scope = messageConfig.getMessageScope();
-        Component baseMessageTemplate = messageConfig.get("messages.moved_group_success");
 
-        Component message = baseMessageTemplate
+        Component globalMsg = messageConfig.get("messages.moved_global_group")
                 .replaceText(builder -> builder.matchLiteral("<group>").replacement(groupName))
-                .replaceText(builder -> builder.matchLiteral("<server>").replacement(server.getServerInfo().getName()));
+                .replaceText(builder -> builder.matchLiteral("<server>").replacement(targetServer));
 
-        sendGroupMessage(scope, message, groupTargets);
+        Component adminMsg = messageConfig.get("messages.moved_admin_group")
+                .replaceText(builder -> builder.matchLiteral("<group>").replacement(groupName))
+                .replaceText(builder -> builder.matchLiteral("<server>").replacement(targetServer));
 
-        // Move all players
-        for (Player player : groupTargets) {
-            moveService.movePlayer(player, server);
+        Component youMsg = messageConfig.get("messages.moved_you_group")
+                .replaceText(builder -> builder.matchLiteral("<group>").replacement(groupName))
+                .replaceText(builder -> builder.matchLiteral("<server>").replacement(targetServer));
+
+        for (Player player : proxyServer.getAllPlayers()) {
+            boolean isTarget = groupTargets.contains(player);
+            boolean isAdmin = permissionHelper.checkAdmin(player);
+
+            if (scope.equals("TARGET_AND_ADMINS")) {
+                if (isTarget) {
+                    player.sendMessage(youMsg);
+                } else if (isAdmin) {
+                    player.sendMessage(adminMsg);
+                }
+            } else {
+                if (isTarget) {
+                    player.sendMessage(youMsg);
+                } else if (isAdmin) {
+                    player.sendMessage(adminMsg);
+                } else {
+                    player.sendMessage(globalMsg);
+                }
+            }
         }
     }
 
@@ -126,14 +139,12 @@ public class MoveCommand implements SimpleCommand {
         String targetName = args[0];
         String serverName = args[1];
 
-        // Check permission
-        if (!permissionHelper.checkAdmin(invocation.source()) && 
+        if (!permissionHelper.checkAdmin(invocation.source()) &&
             !permissionHelper.checkMove(invocation.source())) {
             invocation.source().sendMessage(messageConfig.get("messages.no_permission"));
             return;
         }
 
-        // Find server
         var serverOpt = moveService.findServer(serverName);
         if (serverOpt.isEmpty()) {
             invocation.source().sendMessage(messageConfig.get("messages.server_not_found"));
@@ -141,8 +152,8 @@ public class MoveCommand implements SimpleCommand {
         }
 
         RegisteredServer server = serverOpt.get();
+        String targetServer = server.getServerInfo().getName();
 
-        // Get targets
         List<Player> targets = new ArrayList<>();
 
         if (targetName.equalsIgnoreCase("@a")) {
@@ -156,43 +167,40 @@ public class MoveCommand implements SimpleCommand {
             return;
         }
 
-        // Send messages
+        targets.forEach(p -> moveService.movePlayer(p, server));
+
         String scope = messageConfig.getMessageScope();
-        Component baseMessageTemplate = messageConfig.get("messages.moved_success");
 
-        for (Player player : targets) {
-            Component message = baseMessageTemplate
-                    .replaceText(builder -> builder.matchLiteral("<player>").replacement(player.getUsername()))
-                    .replaceText(builder -> builder.matchLiteral("<server>").replacement(server.getServerInfo().getName()));
+        Component globalMsg = messageConfig.get("messages.moved_global")
+                .replaceText(builder -> builder.matchLiteral("<player>").replacement(targetName))
+                .replaceText(builder -> builder.matchLiteral("<server>").replacement(targetServer));
 
-            sendMessage(scope, message, player);
-            moveService.movePlayer(player, server);
-        }
-    }
+        Component adminMsg = messageConfig.get("messages.moved_admin")
+                .replaceText(builder -> builder.matchLiteral("<player>").replacement(targetName))
+                .replaceText(builder -> builder.matchLiteral("<server>").replacement(targetServer));
 
-    private void sendMessage(String scope, Component message, Player target) {
-        switch (scope) {
-            case "TARGET_ONLY" -> target.sendMessage(message);
-            case "TARGET_AND_ADMINS" -> {
-                target.sendMessage(message);
-                proxyServer.getAllPlayers().stream()
-                        .filter(p -> permissionHelper.checkAdmin(p) || permissionHelper.checkMove(p))
-                        .forEach(p -> p.sendMessage(message));
+        Component youMsg = messageConfig.get("messages.moved_you")
+                .replaceText(builder -> builder.matchLiteral("<server>").replacement(targetServer));
+
+        for (Player player : proxyServer.getAllPlayers()) {
+            boolean isTarget = targets.contains(player);
+            boolean isAdmin = permissionHelper.checkAdmin(player);
+
+            if (scope.equals("TARGET_AND_ADMINS")) {
+                if (isTarget) {
+                    player.sendMessage(youMsg);
+                } else if (isAdmin) {
+                    player.sendMessage(adminMsg);
+                }
+            } else {
+                if (isTarget) {
+                    player.sendMessage(youMsg);
+                } else if (isAdmin) {
+                    player.sendMessage(adminMsg);
+                } else {
+                    player.sendMessage(globalMsg);
+                }
             }
-            default -> proxyServer.getAllPlayers().forEach(p -> p.sendMessage(message));
-        }
-    }
-
-    private void sendGroupMessage(String scope, Component message, List<Player> groupTargets) {
-        switch (scope) {
-            case "TARGET_ONLY" -> groupTargets.forEach(p -> p.sendMessage(message));
-            case "TARGET_AND_ADMINS" -> {
-                groupTargets.forEach(p -> p.sendMessage(message));
-                proxyServer.getAllPlayers().stream()
-                        .filter(p -> permissionHelper.checkAdmin(p) || permissionHelper.checkMove(p))
-                        .forEach(p -> p.sendMessage(message));
-            }
-            default -> proxyServer.getAllPlayers().forEach(p -> p.sendMessage(message));
         }
     }
 
@@ -213,7 +221,6 @@ public class MoveCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
 
-        // First argument: target or @a or -group
         if (args.length == 0 || args.length == 1) {
             String input = args.length == 1 ? args[0].toLowerCase() : "";
 
@@ -226,7 +233,6 @@ public class MoveCommand implements SimpleCommand {
                 result.add("-group");
             }
 
-            // Add online players
             proxyServer.getAllPlayers().stream()
                     .map(Player::getUsername)
                     .filter(name -> input.isEmpty() || name.toLowerCase().startsWith(input))
@@ -236,7 +242,6 @@ public class MoveCommand implements SimpleCommand {
             return result;
         }
 
-        // Second argument: group name (when -group is selected)
         if (args.length == 2 && args[0].equalsIgnoreCase("-group") && luckPermsBridge.isAvailable()) {
             String input = args[1].toLowerCase();
             return luckPermsBridge.getGroupNames().stream()
@@ -245,7 +250,6 @@ public class MoveCommand implements SimpleCommand {
                     .collect(Collectors.toList());
         }
 
-        // Second argument: server name
         if (args.length == 2) {
             String input = args[1].toLowerCase();
             return proxyServer.getAllServers().stream()
@@ -255,7 +259,6 @@ public class MoveCommand implements SimpleCommand {
                     .collect(Collectors.toList());
         }
 
-        // Third argument: server name (when -group is selected)
         if (args.length == 3 && args[0].equalsIgnoreCase("-group")) {
             String input = args[2].toLowerCase();
             return proxyServer.getAllServers().stream()

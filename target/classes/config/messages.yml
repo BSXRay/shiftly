@@ -1,13 +1,15 @@
 # Shiftly Message Configuration
+# Uses legacy color codes (&c = red, &a = green, &e = yellow, etc.)
+# Format codes: &l bold, &o italic, &n underline, &m strikethrough, &k magic, &r reset
 
 messages:
-  no_permission: "<red>You don't have permission.</red>"
-  usage_move: "<yellow>Usage: /move <player|@a> <server></yellow>"
-  usage_move_group: "<yellow>Usage: /move -group <group> <server></yellow>"
-  player_not_found: "<red>Player not found.</red>"
-  server_not_found: "<red>Server not found.</red>"
-  moved_success: "<green>Player: <player> moved -> <server></green>"
-  moved_group_success: "<green>Group: <group> moved -> <server></green>"
+  no_permission: "&c&lYou don't have permission."
+  usage_move: "&e&oUsage: &r/move &7<player|@a> <server>"
+  usage_move_group: "&e&oUsage: &r/move -group &7<group> <server>"
+  player_not_found: "&cPlayer not found."
+  server_not_found: "&cServer not found."
+  moved_success: "&a&lPlayer:&r &f<player> &7moved &a-> &f<server>"
+  moved_group_success: "&a&lGroup:&r &f<group> &7moved &a-> &f<server>"
 
 settings:
   # Message broadcast mode

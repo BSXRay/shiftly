@@ -6,9 +6,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Manages permission defaults from permissions.yml
- */
 public class PermissionManager {
 
     private final Map<String, Boolean> defaults = new HashMap<>();
@@ -17,7 +14,7 @@ public class PermissionManager {
         Yaml yaml = new Yaml();
 
         try (InputStream input = getClass().getClassLoader()
-                .getResourceAsStream("config/permissions.yml")) {
+                .getResourceAsStream("permissions.yml")) {
 
             if (input == null) return;
 
@@ -47,11 +44,6 @@ public class PermissionManager {
         }
     }
 
-    /**
-     * Check if permission is enabled by default
-     * @param permissionKey permission key
-     * @return true if default enabled
-     */
     public boolean isDefaultEnabled(String permissionKey) {
         return defaults.getOrDefault(permissionKey, false);
     }

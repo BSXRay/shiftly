@@ -8,13 +8,10 @@ import java.nio.file.Path;
 public class ConfigLoader {
 
     public static void saveResourceIfNotExists(Path dataFolder, String resourcePath) {
-
         try {
-
             Path target = dataFolder.resolve(resourcePath);
 
             if (!Files.exists(target)) {
-
                 Files.createDirectories(target.getParent());
 
                 try (InputStream in = ConfigLoader.class
